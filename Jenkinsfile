@@ -1,24 +1,46 @@
 pipeline {
   agent any
+  tools {
+    // Define the 'Maven' tool with the installation name 'Maven' (matches the tool configuration in Jenkins)
+    maven 'Maven'
+  }
   stages {
     stage('Build'){
       steps {
-        sh '/opt/apache-maven-3.9.6/bin/mvn -B -DskipTests clean package' 
+        // Use the 'withMaven' step to execute Maven build
+        script {
+          def mavenHome = tool 'Maven'
+          withMaven(maven: mavenHome, mavenSettingsConfig: 'your-maven-settings-id') {
+            sh 'mvn -B -DskipTests clean package'
+          }
+        }
       }
     }
     stage('Test'){
       steps {
-        sh '/opt/apache-maven-3.9.6/bin/mvn test'
+        // Use the 'withMaven' step to execute Maven test
+        script {
+          def mavenHome = tool 'Maven'
+          withMaven(maven: mavenHome, mavenSettingsConfig: 'your-maven-settings-id') {
+            sh 'mvn test'
+          }
+        }
       }
       post {
-        always{
+        always {
           junit 'target/surefire-reports/*.xml'
         }
       }
     }
     stage('Deliver'){
       steps {
-        sh 'export MAVEN_HOME=/opt/apache-maven-3.9.6;export M2_HOME=$MAVEN_HOME;export PATH=$MAVEN_HOME/bin:$PATH;./jenkins/scripts/deliver.sh'
+        // Use the 'withMaven' step to execute Maven and automatically set up the environment
+        script {
+          def mavenHome = tool 'Maven'
+          withMaven(maven: mavenHome, mavenSettingsConfig: 'your-maven-settings-id') {
+            sh './jenkins/scripts/deliver.sh'
+          }
+        }
       }
     }
   }
